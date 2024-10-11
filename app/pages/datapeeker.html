@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data keeper</title>
+</head>
+<body>
+  <h1>Data keeper</h1>
+  <form id="submit-form">
+    <label for="name">Nome:</label>
+    <input type="text" id="name" name="name"><br><br>
+    <button name="Nome" type="submit">Invia</button>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email"><br><br>
+    <button name="Email" type="submit">Invia</button>
+
+    <label for="phone">Telefono:</label>
+    <input type="text" id="phone" name="phone"><br><br>
+    <button name="Telefono" type="submit">Invia</button>
+  </form>
+
+  <script>
+    // Connetti al WebSocket Server
+    const socket = new WebSocket('ws://localhost:8080');
+
+    const form = document.getElementById('submit-form');
+    form.addEventListener('submit', function(event) {
+      event.preventDefault(); // Evita il ricaricamento della pagina
+
+      var buttonValue = event.submitter.value;
+      var buttonName = event.submitter.name;
+      var formData;
+      switch(buttonName) {
+        case 'Nome':
+            formData = {
+                name: document.getElementById('name').value
+            };
+            break;
+        case 'Email':
+            formData = {
+                email: document.getElementById('email').value
+            };
+            break;
+        case 'Telefono':
+            formData = {
+                phone: document.getElementById('phone').value
+            };
+            break;
+      }
+
+      // Invia i dati al server WebSocket
+      socket.send(JSON.stringify(formData));
+    });
+  </script>
+</body>
+</html>

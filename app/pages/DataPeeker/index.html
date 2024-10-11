@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Take a Photo, Scan Barcode, and Upload</title>
+<!--  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.0.2/tesseract.min.js"></script>
+  <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+</head>
+
+
+<body>
+  <h1>Data Peeker</h1>
+    
+    <div>
+      <video id="video" width="270" height="200" style="border: 1px solid gray"></video>
+    </div>
+
+    <!-- Pulsante per caricare la foto -->
+    <button id="upload">Capture Image</button>
+
+    <!-- Output codice a barre -->
+    <h3>Barcode Output:</h3>
+    <div id="barcode-output"></div>
+    <br>
+    <!-- Pulsante per il bar code -->
+    <button id="barcode">Capture Barcode</button>
+
+    <!-- Output OCR -->
+    <h3>OCR Output:</h3>
+    <div id="ocr-output"></div>
+    <br>
+    <!-- Pulsante per catturare il testo -->
+    <button id="capture">Capture Text</button>
+    <br>
+
+<footer>
+    <div>
+      <a class="button" id="resetButton">Reset</a>
+    </div>
+    <div id="sourceSelectPanel" style="display:none">
+      <label for="sourceSelect">Change video source:</label>
+      <select id="sourceSelect" style="max-width:400px">
+      </select>
+    </div>
+  </footer>
+  
+
+    <script type="text/javascript">
+      window.addEventListener('load', function () {
+        let selectedDeviceId;
+        const codeReader = new ZXing.BrowserMultiFormatReader()
+        console.log('ZXing code reader initialized')
+
+        codeReader.listVideoInputDevices()
+          .then((videoInputDevices) => {
+            const sourceSelect = document.getElementById('sourceSelect')
+            selectedDeviceId = videoInputDevices[0].deviceId
+
+            if (videoInputDevices.length >= 1) {
+              videoInputDevices.forEach((element) => {
+                const sourceOption = document.createElement('option')
+                sourceOption.text = element.label
+                sourceOption.value = element.deviceId
+                sourceSelect.appendChild(sourceOption)
+              })
+  
+              sourceSelect.onchange = () => {
+                selectedDeviceId = sourceSelect.value;
+              };
+  
+              const sourceSelectPanel = document.getElementById('sourceSelectPanel')
+              sourceSelectPanel.style.display = 'block'
+            }
+  
+            document.getElementById('resetButton').addEventListener('click', () => {
+              codeReader.reset()
+              document.getElementById('result').textContent = '';
+              console.log('Reset.')
+            })
+  
+          })
+          .catch((err) => {
+            console.error(err)
+          })
+
+        codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
+          if (result) {
+            console.log(result)
+            document.getElementById('barcode-output').textContent = result.text
+          }
+          if (err && !(err instanceof ZXing.NotFoundException)) {
+            console.error(err)
+            document.getElementById('barcode-output').textContent = err
+          }
+        })
+        console.log(`Started continous decode from camera with id ${selectedDeviceId}`)
+
+      })
+// ---- 
+
+    const captureButton = document.getElementById('capture');
+    const ocrOutput = document.getElementById('ocr-output');
+
+    captureButton.addEventListener('click', () => {
+      // Crea il canvas al volo
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Disegna il frame video sul canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Ottieni l'immagine dal canvas
+      const imageData = canvas.toDataURL('image/png');
+
+      // Avvia l'OCR con Tesseract
+      ocrOutput.innerText = "Riconoscimento in corso ...";
+      Tesseract.recognize(
+        imageData,  // L'immagine catturata
+        'eng',      // La lingua da usare per l'OCR (puoi cambiare lingua se necessario)
+        {
+          logger: (m) => {
+            console.log(m);  // Mostra i log di progresso nella console
+          }
+        }
+      ).then(({ data: { text } }) => {
+        console.log('Testo estratto:', text);
+        ocrOutput.innerText = text;  // Mostra il testo estratto nella pagina
+      }).catch((err) => {
+        console.error('Errore con Tesseract:', err);
+        ocrOutput.innerText = "Errore durante l'OCR.";
+      }).finally(() => {
+        // Rimuovi il canvas dopo l'uso
+        canvas.remove();
+      });
+    });
+
+// Carica la foto sul server
+const uploadButton = document.getElementById('upload');
+
+uploadButton.addEventListener('click', () => {
+  // Crea il canvas al volo
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  // Disegna il frame video sul canvas
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.toBlob((blob) => {
+    const formData = new FormData();
+    formData.append('photo', blob, 'photo.png');
+
+    // Invia l'immagine al server
+    fetch('/test/upload.php', {
+      method: 'POST',
+      body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Upload riuscito:', data);
+    })
+    .catch(error => {
+      console.error('Errore nell\'upload:', error);
+    });
+  }, 'image/png');
+});
+
+
+
+
+    </script>
+  
+  </body>
+  
+  </html>
+
+
+<!---   <script src="app.js"></script> -->
+</body>
+</html>
