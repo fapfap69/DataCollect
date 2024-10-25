@@ -23,9 +23,11 @@
 
   <script>
     // Connetti al WebSocket Server
-    const socket = new WebSocket('ws://localhost:8080');
-
+    const host = window.location.hostname;
+    const wsUrl = 'wss://' + host + ':6969';
+    const socket = new WebSocket(wsUrl);
     const form = document.getElementById('submit-form');
+
     form.addEventListener('submit', function(event) {
       event.preventDefault(); // Evita il ricaricamento della pagina
 

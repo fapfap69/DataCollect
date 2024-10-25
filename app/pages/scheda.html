@@ -20,7 +20,9 @@
 
   <script>
     // Connetti al WebSocket Server
-    const socket = new WebSocket('ws://localhost:8080');
+    const host = window.location.hostname;
+    const wsUrl = 'wss://' + host + ':6969';
+    const socket = new WebSocket(wsUrl);
 
     socket.addEventListener('message', function (event) {
       // Ricevi i dati dal server
