@@ -9,7 +9,6 @@
   <link rel="stylesheet" type="text/css" href="app/css/base.css">
 </head>
 
-
 <body>
 <?php
     // questa funzione serve a gestire le combo box ...
